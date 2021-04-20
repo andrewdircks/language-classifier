@@ -1,0 +1,1 @@
+DEV_DB_PATH = "snippets-dev/snippets-dev.db"
