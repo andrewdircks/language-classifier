@@ -1,6 +1,8 @@
 import sqlite3
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.preprocessing.text import Tokenizer
 from settings import (
     DEV_DB_PATH,
     FULL_DB_PATH,
@@ -8,33 +10,47 @@ from settings import (
     chars_map,
     n_chars,
     snippet_len,
+    BATCH_SIZE
 )
 
 
-def get_label(entry):
+def process_label(label):
     """
-    Return this data entry's label as a byte variable.
+    Return this data entry's label as a byte variable. Assume `entry` is an 
+    element of `settings.langs`.
     """
-    return tf.Variable(langs_map[entry], dtype="int8")
+    label = label.numpy().decode('UTF-8')
+    return tf.convert_to_tensor(langs_map[label], dtype=tf.int8)
 
 
-def get_snippet(entry):
+def _to_byte_vector(char_dict):
+    vec = np.zeros([n_chars], dtype='int8')
+    for char in char_dict:
+        try:
+            vec[chars_map[char]] += char_dict[char]
+        except:
+            pass
+    return tf.convert_to_tensor(vec, dtype=tf.int8)
+
+
+def process_snippet(tok, snippet):
     """
-    Return this data entry's code snippet as a byte vector with.
+    Return this data entry's code snippet as a byte vector with...
     """
-    # read individual characters of tf string
-    entry = tf.strings.unicode_split(entry, "UTF-8").numpy()
+    tok = Tokenizer(char_level=True)
+    tok.fit_on_texts([snippet.numpy().decode('UTF-8')])
+    return _to_byte_vector(tok.word_index)
 
-    freqs = np.zeros([n_chars], dtype="int8")
-    for i, c in enumerate(entry):
-        if i > snippet_len:
-            break
-        index = chars_map[c.decode("UTF-8").lower()]
-        freqs[index] += 1
 
-    print(freqs)
-    return tf.Variable(freqs, dtype="int8")
+def process(tok, label, snippet):
+    return process_snippet(tok, snippet), process_label(label)
 
+def process_pyfn(label, snippet):
+    tok = Tokenizer(char_level=True)
+    x, y = tf.py_function(lambda label, snippet: process(tok, label, snippet), inp=[label, snippet], Tout=[tf.int8, tf.int8])
+    x.set_shape((n_chars,))
+    y.set_shape([])
+    return x, y
 
 def load(dev=True):
     if dev:
@@ -51,13 +67,17 @@ def load(dev=True):
         (tf.string, tf.string),
     )
 
+def _map():
+    data = load()
+    data = data.shuffle(BATCH_SIZE)
+    data = data.map(process_pyfn)
+    print(data)
+    return data
+
 
 if __name__ == "__main__":
-    data = load()
-    data = data.shuffle(1000)
-    for i, elt in enumerate(data):
-        if i > 1000:
+    data = _map()
+    for i, d in enumerate(data):
+        if i > 0:
             break
-        v = get_snippet(elt[1])
-        print(v)
-    # get_snippet("")
+        print(d)
