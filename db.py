@@ -49,7 +49,7 @@ def process_pyfn(label, snippet):
     tok = Tokenizer(char_level=True)
     x, y = tf.py_function(lambda label, snippet: process(tok, label, snippet), inp=[label, snippet], Tout=[tf.int8, tf.int8])
     x.set_shape((n_chars,))
-    y.set_shape([])
+    y.set_shape(())
     return x, y
 
 def load(dev=True):
@@ -70,10 +70,8 @@ def load(dev=True):
 def _map():
     data = load()
     data = data.shuffle(BATCH_SIZE)
-    data = data.map(process_pyfn)
-    print(data)
+    data = data.map(process_pyfn).batch(BATCH_SIZE)
     return data
-
 
 if __name__ == "__main__":
     data = _map()
