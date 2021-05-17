@@ -4,6 +4,8 @@ import uuid
 import os
 import random
 
+from settings import langs_ace
+
 app = Flask(__name__)
 app.secret_key = "s3cr3t"
 app.debug = False
@@ -30,11 +32,8 @@ def post_javascript_data():
 	#write result to language.txt
 	#example language.txt = ace/mode/python
 	#randomly pick to check simple functionality
-	r =  random.randint(0, 1)
-	if r == 0:
-		language_txt = "ace/mode/python"
-	else:
-		language_txt = "ace/mode/javascript"
+	r =  random.randint(0, 20)
+	language_txt = "ace/mode/{}".format(langs_ace[r])
 	with open("language.txt", "w") as file:
 		file.write(language_txt)
 
