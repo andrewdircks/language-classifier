@@ -34,14 +34,14 @@ langs_ace = [
     "sh",
     "c_cpp",
     "c_cpp",
-    "a",
+    "plain_text",
     "dot",
     "golang",
     "html",
     "json",
     "java",
     "javascript",
-    "plain_text", # jupyter is nothing
+    "python", # jupyter is nothing
     "markdown",
     "powershell",
     "python",
@@ -77,3 +77,6 @@ MAX_FEATURES = 10000
 SNIPPET_LENGTH = 250
 
 PERCENT_TEST = 0.2
+
+if __name__ == '__main__':
+    print(langs_map)

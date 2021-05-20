@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>ACE in Action</title>
+<title>4701 Code Editor!</title>
 <style type="text/css" media="screen">
     #editor {
         position: absolute;
@@ -27,20 +27,24 @@
 <script>
  var editor = ace.edit("editor");
  editor.setTheme("ace/theme/monokai");
- editor.session.setMode("ace/mode/javascipt");
+ editor.session.setMode("ace/mode/javascript");
 
- editor.session.on('change', function() {
+function runModel() {
     $.post("/postmethod", {txt_data: JSON.stringify(editor.session.getValue())}, 
         function(result) {
             $.get("/getmethod",function( data ) {
                 editor.session.setMode(data);
+                document.querySelector('title').textContent = (data.split("/").pop());
             });
-        }
+        });
+}
 
-        );
+//  editor.session.on('change', function() {
+    
 
- });
+//  });
 
+setInterval(runModel, 8000);
 </script>
 
 </html>

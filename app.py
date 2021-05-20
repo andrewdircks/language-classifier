@@ -3,36 +3,60 @@ import json
 import uuid
 import os
 import random
+import pickle
+import time
 
-from settings import langs_ace
+from settings import langs_ace, langs
 
 app = Flask(__name__)
 app.secret_key = "s3cr3t"
 app.debug = False
 app._static_folder = os.path.abspath("templates/static/")
 
+model_path = 'models/bayes_m1.sav'
+
+model = None
+
 @app.route("/", methods=["GET"])
 def index():
-	#Load the main page of interface
+	# load the model
+	global model
+	model = pickle.load(open(model_path, 'rb'))
+
+	# write javascript
+	with open("language.txt", "w") as file:
+		file.write("ace/mode/javascript")
+
+	# load the main page of interface
 	return render_template("layouts/index.html")
+
 
 @app.route('/postmethod', methods = ['POST'])
 def post_javascript_data():
+	print('GETTING REQUEST')
 	jsdata = request.form['txt_data']
 	txtstring = json.loads(jsdata)
 
-	#Note: we can write to a file and process somewhere else
-	# with open("code.txt", "w") as file:
-	# 	file.write(txtstring)
-	# print ("returning js data:", jsdata)
+	print(txtstring)
 
+	# don't bother calling the model on short snippets
+	# if txtstring.count('\n') < 3:
+	# 	return jsdata
 
+	# global last
+	# last += 1
+	# if last < 10:
+	# 	return jsdata
+	# else:
+	# 	last = 0
 
-	#call model to compute language string....
-	#write result to language.txt
-	#example language.txt = ace/mode/python
-	#randomly pick to check simple functionality
-	r =  random.randint(0, 20)
+	# call model to compute language from string
+	# unfortunately, this takes ~ 6 seconds
+	r = model.predict([txtstring])[0]
+
+	# set the language mode and write
+	print("real language ", langs[r])
+	print("ace language ", langs_ace[r])
 	language_txt = "ace/mode/{}".format(langs_ace[r])
 	with open("language.txt", "w") as file:
 		file.write(language_txt)
